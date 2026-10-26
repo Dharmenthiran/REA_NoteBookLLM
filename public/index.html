@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aetheria Notebook · Grounded AI Research & Studio</title>
+  <meta name="description" content="Next-generation source-grounded AI research notebook with interactive audio overview podcast, study guides, and multi-source synthesis.">
+  <link rel="stylesheet" href="css/index.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- PDF.js for client-side PDF parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <i data-lucide="sparkles" style="width: 22px; height: 22px;"></i>
+        </div>
+        <div class="brand-title-wrap">
+          <div class="brand-name">
+            Aetheria <span style="font-weight: 400; opacity: 0.85;">Notebook</span>
+            <span class="brand-badge">PRO REBUILD</span>
+          </div>
+        </div>
+
+        <!-- Notebook switcher pill button -->
+        <button class="notebook-pill-btn" id="notebook-switcher-btn" title="Switch or create notebooks">
+          <i data-lucide="book-marked" style="width: 16px; height: 16px;"></i>
+          <span id="current-notebook-title">Quantum Computing & Neuromorphic AI</span>
+          <i data-lucide="chevron-down" style="width: 14px; height: 14px; opacity: 0.6;"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Actions -->
+      <div class="nav-actions">
+        <!-- Grounding status pill -->
+        <div class="grounding-indicator" id="grounding-status-pill">
+          <span class="pulse-dot"></span>
+          <span id="grounding-status-text">3 Sources Active · 100% Grounded</span>
+        </div>
+
+        <!-- New Notebook Button -->
+        <button class="secondary-btn" id="new-notebook-nav-btn">
+          <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+          <span>New Notebook</span>
+        </button>
+
+        <!-- Theme Palette Selector -->
+        <div class="theme-select-wrap" title="Switch Color Theme">
+          <i data-lucide="palette" style="width: 15px; height: 15px; color: var(--accent-cyan-light);"></i>
+          <select id="theme-selector-nav" class="theme-select-input">
+            <option value="oceanic" selected>Oceanic Sapphire & Cyan</option>
+            <option value="amethyst">Cyber Amethyst</option>
+            <option value="emerald">Emerald Matrix</option>
+            <option value="sunset">Sunset Horizon</option>
+            <option value="gold">Royal Gold</option>
+          </select>
+        </div>
+
+        <!-- Settings Modal Button -->
+        <button class="icon-btn" id="open-settings-btn" title="Model & API Settings">
+          <i data-lucide="settings" style="width: 18px; height: 18px;"></i>
+        </button>
+
+        <!-- Export Notebook Button -->
+        <button class="icon-btn" id="export-notebook-btn" title="Export Notebook to Markdown">
+          <i data-lucide="download" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 3-Panel Workspace Grid -->
+    <main class="workspace-grid">
+      
+      <!-- ===================================================================
+           LEFT PANEL: SOURCES
+           =================================================================== -->
+      <aside class="panel sources-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="files" style="width: 18px; height: 18px; color: var(--accent-cyan);"></i>
+            <span>Sources</span>
+            <span class="badge-count" id="sources-count-badge">3</span>
+          </div>
+          <button class="icon-btn" id="add-source-icon-btn" title="Add Source">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+          </button>
+        </div>
+
+        <div class="sources-toolbar">
+          <button class="add-source-hero-btn" id="add-source-hero-btn">
+            <i data-lucide="file-plus-2" style="width: 18px; height: 18px; color: var(--accent-purple-light);"></i>
+            <span>Add Sources</span>
+          </button>
+
+          <div class="sources-control-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="select-all-sources-toggle" checked>
+              <span>Select all</span>
+            </label>
+            <span id="sources-wordcount-total">18,420 words total</span>
+          </div>
+        </div>
+
+        <!-- Sources List -->
+        <div class="sources-list" id="sources-list-container">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </aside>
+
+      <!-- ===================================================================
+           CENTER PANEL: CHAT & GROUNDED SYNTHESIS (NOTEBOOK GUIDE)
+           =================================================================== -->
+      <section class="panel chat-panel">
+        <div class="chat-grounding-banner">
+          <div class="grounding-sources-active" id="active-sources-chips-summary">
+            <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--accent-emerald);"></i>
+            <span id="active-sources-count-text">3 of 3 sources active</span>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">Strictly verified against your data</span>
+        </div>
+
+        <!-- Chat Stream -->
+        <div class="chat-stream-container" id="chat-stream-container">
+          <!-- Dynamic Starter Prompts -->
+          <div class="starter-prompts-wrap" id="starter-prompts-wrap">
+            <div class="starter-prompts-title">
+              <i data-lucide="compass" style="width: 14px; height: 14px;"></i>
+              <span>Suggested Explorations</span>
+            </div>
+            <div class="starter-chips" id="starter-chips-container">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Chat messages stream here -->
+          <div id="messages-container" style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-wrapper">
+          <div class="input-controls-bar">
+            <!-- Tutor Mode Toggle -->
+            <div class="tutor-mode-toggle" id="tutor-mode-toggle" title="Switch between direct synthesis or Socratic study guide">
+              <i data-lucide="graduation-cap" style="width: 15px; height: 15px;"></i>
+              <span>Learning Guide Mode</span>
+            </div>
+            <span style="font-size: 0.72rem; color: var(--text-dim);" id="citation-hint-text">Responses include exact clickable citations [1]</span>
+          </div>
+
+          <div class="input-box-container">
+            <textarea 
+              class="chat-textarea" 
+              id="chat-input-textarea" 
+              placeholder="Ask anything about your sources..." 
+              rows="1"></textarea>
+            <button class="send-btn" id="chat-send-btn" title="Send Question" disabled>
+              <i data-lucide="arrow-up" style="width: 18px; height: 18px;"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           RIGHT PANEL: STUDIO & NOTES
+           =================================================================== -->
+      <aside class="panel studio-panel">
+        <div class="tabs-header">
+          <button class="tab-btn active" id="tab-studio-btn" data-tab="studio">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--accent-purple-light);"></i>
+            <span>Studio</span>
+          </button>
+          <button class="tab-btn" id="tab-notes-btn" data-tab="notes">
+            <i data-lucide="edit-3" style="width: 16px; height: 16px; color: var(--accent-cyan-light);"></i>
+            <span>Notes</span>
+            <span class="badge-count" id="notes-count-badge">2</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: STUDIO CONTENT -->
+        <div class="tab-content active" id="studio-tab-content">
+          
+          <!-- AUDIO OVERVIEW (DEEP DIVE PODCAST) -->
+          <div class="audio-overview-card" id="audio-overview-card">
+            <div class="audio-card-header">
+              <span class="podcast-tag">AI Podcast · Dual Hosts</span>
+              <span style="font-size: 0.75rem; color: var(--accent-purple-light); font-weight: 600;" id="podcast-status-tag">Ready to Play</span>
+            </div>
+
+            <div class="audio-hosts-visual">
+              <div class="host-avatar-group">
+                <div class="host-avatar host-1" id="avatar-alex" title="Alex (Deep Dive Host)">A</div>
+                <div class="host-avatar host-2" id="avatar-jordan" title="Jordan (Synthesizer Host)">J</div>
+              </div>
+              <div class="audio-title-info">
+                <span class="audio-main-title">Deep Dive: Sources Overview</span>
+                <span class="audio-sub-title">Alex & Jordan discuss your sources</span>
+              </div>
+            </div>
+
+            <!-- Waveform Canvas -->
+            <canvas class="waveform-canvas" id="waveform-canvas" width="340" height="52"></canvas>
+
+            <div class="audio-time-info">
+              <span id="audio-current-time">0:00</span>
+              <span id="audio-total-time">4:15</span>
+            </div>
+
+            <!-- Player Controls -->
+            <div class="audio-player-controls">
+              <button class="audio-control-btn" id="audio-rewind-btn" title="Rewind 15s">
+                <i data-lucide="rotate-ccw" style="width: 18px; height: 18px;"></i>
+              </button>
+
+              <button class="audio-play-hero-btn" id="audio-play-btn" title="Play / Pause Audio Overview">
+                <i data-lucide="play" id="audio-play-icon" style="width: 20px; height: 20px; margin-left: 2px;"></i>
+              </button>
+
+              <button class="audio-control-btn" id="audio-forward-btn" title="Forward 15s">
+                <i data-lucide="rotate-cw" style="width: 18px; height: 18px;"></i>
+              </button>
+
+              <!-- Speed Selector -->
+              <select class="audio-speed-select" id="audio-speed-select" title="Playback Speed">
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1.0x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2.0x</option>
+              </select>
+            </div>
+
+            <!-- Focus Customization Input -->
+            <div class="audio-customize-row">
+              <input 
+                type="text" 
+                class="audio-customize-input" 
+                id="audio-custom-focus-input" 
+                placeholder="Customize focus (e.g. explain like I'm 5)...">
+              <button class="secondary-btn" id="generate-custom-audio-btn" style="padding: 6px 10px; font-size: 0.78rem;">
+                <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
+                <span>Regenerate</span>
+              </button>
+            </div>
+
+            <!-- Live Synchronized Transcript -->
+            <div class="audio-transcript-container" id="audio-transcript-container">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- STUDIO GENERATORS CARDS -->
+          <div class="studio-generators-title">Generate Artifacts</div>
+          <div class="studio-grid">
+            
+            <div class="studio-action-card" id="btn-gen-study-guide">
+              <div class="studio-card-icon icon-study">
+                <i data-lucide="book-open-check" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="studio-card-title">Study Guide</div>
+              <div class="studio-card-desc">Quiz with answers, glossary & essay prompts</div>
+            </div>
+
+            <div class="studio-action-card" id="btn-gen-briefing">
+              <div class="studio-card-icon icon-brief">
+                <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="studio-card-title">Briefing Doc</div>
+              <div class="studio-card-desc">Executive summary, key insights & takeaways</div>
+            </div>
+
+            <div class="studio-action-card" id="btn-gen-faq">
+              <div class="studio-card-icon icon-faq">
+                <i data-lucide="help-circle" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="studio-card-title">FAQ</div>
+              <div class="studio-card-desc">Common questions and grounded answers</div>
+            </div>
+
+            <div class="studio-action-card" id="btn-gen-timeline">
+              <div class="studio-card-icon icon-timeline">
+                <i data-lucide="calendar-clock" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="studio-card-title">Timeline</div>
+              <div class="studio-card-desc">Chronological sequence of key milestones</div>
+            </div>
+
+            <div class="studio-action-card" id="btn-gen-mindmap" style="grid-column: span 2;">
+              <div class="studio-card-icon icon-mindmap">
+                <i data-lucide="network" style="width: 18px; height: 18px;"></i>
+              </div>
+              <div class="studio-card-title">Conceptual Mind Map</div>
+              <div class="studio-card-desc">Visual structural hierarchy and entity relations across sources</div>
+            </div>
+
+          </div>
+
+          <!-- ACTIVE ARTIFACT VIEWER (if an artifact is active) -->
+          <div class="artifact-viewer-container" id="artifact-viewer-container" style="display: none;">
+            <div class="artifact-viewer-header">
+              <div class="artifact-title" id="active-artifact-title">Study Guide</div>
+              <div style="display: flex; gap: 6px;">
+                <button class="secondary-btn" id="artifact-save-to-notes-btn" style="padding: 4px 8px; font-size: 0.76rem;">
+                  <i data-lucide="plus" style="width: 13px; height: 13px;"></i>
+                  <span>Save to Notes</span>
+                </button>
+                <button class="icon-btn" id="close-artifact-viewer-btn" title="Close" style="width: 28px; height: 28px;">
+                  <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </div>
+            <div class="artifact-body" id="active-artifact-body">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB 2: NOTES CONTENT -->
+        <div class="tab-content" id="notes-tab-content">
+          <!-- New Note Creator -->
+          <div class="new-note-box">
+            <input 
+              type="text" 
+              class="new-note-title-input" 
+              id="new-note-title" 
+              placeholder="Note title...">
+            <textarea 
+              class="new-note-content-input" 
+              id="new-note-content" 
+              placeholder="Write a thought or paste findings..."></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+              <button class="primary-btn" id="add-note-btn" style="padding: 6px 12px; font-size: 0.8rem;">
+                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                <span>Add Note</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Notes List -->
+          <div class="notes-list" id="notes-list-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </aside>
+
+    </main>
+
+    <!-- ===================================================================
+         CITATION INSPECTOR FLOATING POPUP / DRAWER
+         =================================================================== -->
+    <div class="citation-inspector-drawer" id="citation-inspector-drawer">
+      <div class="citation-inspector-header">
+        <div class="citation-source-tag">
+          <i data-lucide="quote" style="width: 14px; height: 14px;"></i>
+          <span id="citation-source-name">Source Title</span>
+        </div>
+        <button class="icon-btn" id="close-citation-inspector-btn" style="width: 24px; height: 24px;">
+          <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+        </button>
+      </div>
+      <div class="citation-quote-box" id="citation-quote-box">
+        "Exact quoted text excerpt from source with high confidence grounding..."
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-dim);">
+        <span id="citation-location-text">Section 2 · Chunk #4</span>
+        <button class="secondary-btn" id="citation-open-full-source-btn" style="padding: 3px 8px; font-size: 0.72rem;">
+          View Full Source
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL: ADD SOURCE
+         =================================================================== -->
+    <div class="modal-overlay" id="add-source-modal">
+      <div class="modal-window">
+        <div class="modal-header">
+          <div class="modal-title">Add Sources to Notebook</div>
+          <button class="icon-btn" id="close-add-source-modal-btn">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="ingest-tabs">
+            <button class="ingest-tab-btn active" data-ingest="file">Upload File</button>
+            <button class="ingest-tab-btn" data-ingest="url">Web Link / YouTube</button>
+            <button class="ingest-tab-btn" data-ingest="text">Pasted Text</button>
+            <button class="ingest-tab-btn" data-ingest="sample">Sample Library</button>
+          </div>
+
+          <!-- TAB 1: File Upload -->
+          <div class="ingest-tab-view" id="ingest-view-file">
+            <div class="dropzone-area" id="file-dropzone">
+              <input type="file" id="file-input-element" accept=".pdf,.txt,.md,.json,.csv" multiple style="display: none;">
+              <div class="dropzone-icon">
+                <i data-lucide="upload-cloud" style="width: 24px; height: 24px;"></i>
+              </div>
+              <div>
+                <strong style="color: var(--text-main);">Click to browse</strong> or drag & drop documents
+              </div>
+              <span style="font-size: 0.75rem; color: var(--text-dim);">
+                Supports PDF, Markdown, Plain Text (.txt), CSV, and JSON
+              </span>
+            </div>
+          </div>
+
+          <!-- TAB 2: Web URL & YouTube -->
+          <div class="ingest-tab-view" id="ingest-view-url" style="display: none;">
+            <div class="form-group">
+              <label class="form-label" for="url-source-input">Web Link or YouTube Video URL</label>
+              <input 
+                type="url" 
+                class="form-input" 
+                id="url-source-input" 
+                placeholder="https://www.youtube.com/watch?v=... or https://example.com/article">
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+              <span style="color: #F87171; font-weight: 600;">🎬 YouTube Videos Supported:</span>
+              <span>Automatically downloads and parses the complete spoken transcript with timestamps for exact source grounding and video summaries.</span>
+            </div>
+          </div>
+
+          <!-- TAB 3: Pasted Text -->
+          <div class="ingest-tab-view" id="ingest-view-text" style="display: none;">
+            <div class="form-group">
+              <label class="form-label" for="text-source-title">Source Title</label>
+              <input 
+                type="text" 
+                class="form-input" 
+                id="text-source-title" 
+                placeholder="e.g. Interview Transcript, Lecture Notes...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="text-source-content">Content</label>
+              <textarea 
+                class="form-textarea" 
+                id="text-source-content" 
+                rows="8" 
+                placeholder="Paste any article, book excerpt, or notes here..."></textarea>
+            </div>
+          </div>
+
+          <!-- TAB 4: Sample Library -->
+          <div class="ingest-tab-view" id="ingest-view-sample" style="display: none;">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+              Choose from pre-loaded foundational research papers to test multi-source synthesis:
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="secondary-btn sample-load-btn" data-sample="neuro-1" style="justify-content: flex-start; text-align: left;">
+                <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--accent-cyan-light);"></i>
+                <div>
+                  <strong>Neuromorphic Computing Architecture (MIT)</strong>
+                  <div style="font-size: 0.72rem; color: var(--text-dim);">Spiking neural networks & energy-efficient memristors</div>
+                </div>
+              </button>
+
+              <button class="secondary-btn sample-load-btn" data-sample="quantum-2" style="justify-content: flex-start; text-align: left;">
+                <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--accent-purple-light);"></i>
+                <div>
+                  <strong>Topological Quantum Error Correction (Nature)</strong>
+                  <div style="font-size: 0.72rem; color: var(--text-dim);">Anyonic braids, surface codes, and fault tolerance</div>
+                </div>
+              </button>
+
+              <button class="secondary-btn sample-load-btn" data-sample="synthetic-3" style="justify-content: flex-start; text-align: left;">
+                <i data-lucide="file-text" style="width: 16px; height: 16px; color: var(--accent-emerald);"></i>
+                <div>
+                  <strong>Bio-Hybrid Organic Synapses in Robotics</strong>
+                  <div style="font-size: 0.72rem; color: var(--text-dim);">Interfacing living neurons with silicon CMOS</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="secondary-btn" id="cancel-add-source-btn">Cancel</button>
+          <button class="primary-btn" id="submit-add-source-btn">Add Source</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL: SOURCE FULL VIEWER
+         =================================================================== -->
+    <div class="modal-overlay" id="source-viewer-modal">
+      <div class="modal-window" style="max-width: 800px;">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="source-viewer-title">Source Document</div>
+            <div style="font-size: 0.75rem; color: var(--text-dim);" id="source-viewer-meta">Word count · Added date</div>
+          </div>
+          <button class="icon-btn" id="close-source-viewer-modal-btn">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+          </button>
+        </div>
+        <div class="modal-body" style="max-height: 60vh;">
+          <div id="source-viewer-content" style="font-size: 0.9rem; line-height: 1.7; color: var(--text-muted); white-space: pre-wrap; user-select: text;"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="secondary-btn" id="source-viewer-close-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL: NOTEBOOKS MANAGER
+         =================================================================== -->
+    <div class="modal-overlay" id="notebooks-modal">
+      <div class="modal-window">
+        <div class="modal-header">
+          <div class="modal-title">My Notebooks</div>
+          <button class="icon-btn" id="close-notebooks-modal-btn">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div style="display: flex; gap: 8px;">
+            <input 
+              type="text" 
+              class="form-input" 
+              id="new-notebook-name-input" 
+              placeholder="Enter new notebook name..." 
+              style="flex: 1;">
+            <button class="primary-btn" id="create-notebook-confirm-btn">
+              <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+              <span>Create</span>
+            </button>
+          </div>
+
+          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;" id="notebooks-list-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL: SETTINGS & MODEL CONFIGURATION
+         =================================================================== -->
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal-window">
+        <div class="modal-header">
+          <div class="modal-title">Model & Intelligence Settings</div>
+          <button class="icon-btn" id="close-settings-modal-btn">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="llm-provider-select">Synthesis Engine</label>
+            <select class="form-input" id="llm-provider-select">
+              <option value="builtin" selected>Built-in Intelligent Grounding Engine (Offline & Fast)</option>
+              <option value="gemini">Google Gemini API (Gemini 1.5 Pro / Flash)</option>
+              <option value="openai">OpenAI API (GPT-4o / GPT-4o-mini)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="api-key-group" style="display: none;">
+            <label class="form-label" for="api-key-input">API Key</label>
+            <input 
+              type="password" 
+              class="form-input" 
+              id="api-key-input" 
+              placeholder="Paste your API key here...">
+            <span style="font-size: 0.72rem; color: var(--text-dim);">
+              Keys are stored strictly in your browser's LocalStorage and never logged.
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Audio Podcast Voices</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">Host 1 (Alex)</span>
+                <select class="form-input" id="voice-host-1" style="font-size: 0.8rem;"></select>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">Host 2 (Jordan)</span>
+                <select class="form-input" id="voice-host-2" style="font-size: 0.8rem;"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-btn" id="save-settings-btn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Application Logic Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
